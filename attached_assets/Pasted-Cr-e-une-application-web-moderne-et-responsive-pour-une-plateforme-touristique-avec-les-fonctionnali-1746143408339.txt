@@ -1,0 +1,85 @@
+Crée une application web moderne et responsive pour une plateforme touristique avec les fonctionnalités suivantes :
+
+🧭 Fonctionnalités principales :
+Partage des offres de voyages organisés avec système de réservation :
+
+Page d'accueil avec affichage des offres en vedette et catégories (Mer, Montagne, Désert...).
+
+Quand l'utilisateur clique sur une offre, il est redirigé vers une page dédiée contenant :
+
+Description détaillée du voyage.
+
+Plan du tour (Tour Plan).
+
+Carte interactive du trajet (Tour Map).
+
+Calendrier dynamique avec prix par date.
+
+Système de réservation avec formulaire (choix date, nombre de personnes, infos personnelles).
+
+Section "You may like" avec suggestions de destinations similaires.
+
+Section promotions spéciales.
+
+Système de demande de voyage personnalisé :
+
+Formulaire où le client choisit :
+
+Destination (ville marocaine ou autre).
+
+Date de départ.
+
+Nombre de personnes.
+
+Budget ou plage de tarifs.
+
+E-commerce (Store) :
+
+Boutique intégrée vendant :
+
+Pièces artisanales marocaines.
+
+Souvenirs traditionnels.
+
+Système de panier + commande + confirmation.
+
+Blog intégré :
+
+Articles sur les destinations, conseils de voyage, culture locale...
+
+Fonction de commentaires et partage sur réseaux sociaux.
+
+🔐 Admin Panel :
+Interface sécurisée pour gérer :
+
+Offres de voyages (ajout, édition, suppression).
+
+Produits du store.
+
+Commandes clients.
+
+Articles de blog.
+
+Demandes de voyages personnalisés.
+
+Optimisé pour le référencement SEO (titres, meta descriptions, URL propres).
+
+🎨 Style :
+UI/UX moderne et responsive.
+
+Utilisation de composants animés et cartes interactives.
+
+Intégration avec Google Maps ou Leaflet pour l'affichage des trajets.
+
+🧰 Stack suggéré :
+Frontend : React.js ou Next.js
+
+Backend : Node.js avec Express ou Flask
+
+Base de données : MongoDB ou PostgreSQL
+
+Admin Panel : intégré ou via une interface dédiée avec Auth (ex: AdminJS)
+
+E-commerce : Paiement via Stripe ou PayPal (mock si démo)
+
+L'application doit être bien structurée, modulaire, facile à maintenir et prête à être déployée.

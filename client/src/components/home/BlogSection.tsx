@@ -6,6 +6,7 @@ import { BlogPost } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -64,12 +65,36 @@ const BlogSkeleton = () => (
 );
 
 const BlogSection = () => {
+  const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
+  
   const { data: posts, isLoading } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog"],
   });
 
-  // Get the first 3 blog posts for the homepage section
-  const latestPosts = posts?.slice(0, 3);
+  // Filtrer pour n'obtenir que les articles en vedette
+  useEffect(() => {
+    if (posts) {
+      // Filtrer strictement les articles où featured est exactement true
+      const filtered = posts.filter(post => post.featured === true);
+      console.log('Articles filtrés par featured===true:', filtered.length);
+      
+      // Si aucun article n'est en vedette, utiliser les 3 plus récents
+      if (filtered.length === 0) {
+        console.log('Aucun article en vedette, affichage des 3 plus récents');
+        setFeaturedPosts(posts.slice(0, 3));
+      } else {
+        // Limiter à 3 articles en vedette
+        setFeaturedPosts(filtered.slice(0, 3));
+      }
+    }
+  }, [posts]);
+
+  // Ajouter un log de débogage pour voir quels articles sont réellement en vedette
+  useEffect(() => {
+    if (posts) {
+      console.log('Tous les articles:', posts.map(p => ({id: p.id, title: p.title, featured: p.featured})));
+    }
+  }, [posts]);
 
   return (
     <section className="py-16 container mx-auto px-4">
@@ -85,7 +110,12 @@ const BlogSection = () => {
           ? Array(3)
               .fill(0)
               .map((_, index) => <BlogSkeleton key={index} />)
-          : latestPosts?.map((post) => <BlogCard key={post.id} post={post} />)}
+          : featuredPosts?.length > 0 
+              ? featuredPosts.map((post) => <BlogCard key={post.id} post={post} />)
+              : <div className="col-span-3 text-center py-8">
+                  <p className="text-gray-500">Aucun article en vedette disponible pour le moment.</p>
+                </div>
+        }
       </div>
       
       <div className="text-center mt-8">

@@ -12,11 +12,12 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Simplifions pour n'utiliser que l'authentification par session (cookies)
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: "include", // Inclure les cookies dans chaque requête
   });
 
   await throwIfResNotOk(res);
@@ -30,7 +31,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+      credentials: "include", // Inclure les cookies dans chaque requête
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -46,8 +47,8 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+      staleTime: 1000 * 60, // 1 minute au lieu de Infinity
       retry: false,
     },
     mutations: {

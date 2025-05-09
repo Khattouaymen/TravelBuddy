@@ -28,10 +28,12 @@ import {
 const formSchema = z.object({
   fullName: z.string().min(3, "Le nom complet est requis"),
   email: z.string().email("Email invalide"),
+  phone: z.string().min(8, "Le numéro de téléphone est requis"), // Nouveau champ pour le téléphone
   destination: z.string().min(1, "La destination est requise"),
   budget: z.string().min(1, "Le budget est requis"),
   departureDate: z.string().min(1, "La date de départ est requise"),
   persons: z.string().min(1, "Le nombre de voyageurs est requis"),
+  durationDays: z.string().min(1, "La durée du voyage est requise"), // Nouveau champ
   interests: z.string().optional(),
   additionalDetails: z.string().optional(),
 });
@@ -48,10 +50,12 @@ const CustomTravelRequest = () => {
     defaultValues: {
       fullName: "",
       email: "",
+      phone: "", // Nouvelle valeur par défaut
       destination: "",
       budget: "",
       departureDate: "",
       persons: "",
+      durationDays: "", // Nouvelle valeur par défaut
       interests: "",
       additionalDetails: "",
     },
@@ -62,8 +66,34 @@ const CustomTravelRequest = () => {
     try {
       // Set interests as comma-separated string
       data.interests = interestsArray.join(",");
+      
+      // Convertir les valeurs en formats appropriés pour le serveur
+      let durationValue = 0;
+      switch(data.durationDays) {
+        case "1-3": durationValue = 3; break;
+        case "4-7": durationValue = 7; break; 
+        case "8-14": durationValue = 14; break;
+        case "15-21": durationValue = 21; break;
+        case "22+": durationValue = 30; break;
+        default: durationValue = 7; // Valeur par défaut
+      }
+      
+      // Créer l'objet de données à envoyer avec tous les champs, y compris durationDays
+      const dataToSend = {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone, // Inclure le champ téléphone
+        destination: data.destination,
+        budget: data.budget,
+        departureDate: data.departureDate,
+        persons: parseInt(data.persons) || 5, // Si '5+' ou non numérique, utiliser 5
+        durationDays: durationValue, // Maintenant nous incluons durationDays
+        interests: data.interests,
+        additionalDetails: data.additionalDetails
+      };
 
-      await apiRequest("POST", "/api/custom-requests", data);
+      console.log("Données envoyées:", dataToSend);
+      await apiRequest("POST", "/api/custom-requests", dataToSend);
       toast({
         title: "Demande envoyée",
         description: "Nous vous contacterons bientôt avec une proposition personnalisée.",
@@ -71,6 +101,7 @@ const CustomTravelRequest = () => {
       form.reset();
       setInterestsArray([]);
     } catch (error) {
+      console.error("Erreur de soumission:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -153,6 +184,20 @@ const CustomTravelRequest = () => {
                   />
                 </div>
 
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Votre numéro de téléphone" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -183,10 +228,10 @@ const CustomTravelRequest = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Moins de 3000 MAD">Moins de 3000 MAD</SelectItem>
-                            <SelectItem value="3000 - 5000 MAD">3000 - 5000 MAD</SelectItem>
-                            <SelectItem value="5000 - 8000 MAD">5000 - 8000 MAD</SelectItem>
-                            <SelectItem value="Plus de 8000 MAD">Plus de 8000 MAD</SelectItem>
+                            <SelectItem value="Moins de 1000 MAD">Moins de 1000 MAD</SelectItem>
+                            <SelectItem value="1000 - 2000 MAD">1000 - 2000 MAD</SelectItem>
+                            <SelectItem value="2000 - 3000 MAD">2000 - 3000 MAD</SelectItem>
+                            <SelectItem value="Plus de 3000 MAD">Plus de 3000 MAD</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -237,6 +282,34 @@ const CustomTravelRequest = () => {
                     )}
                   />
                 </div>
+                
+                <FormField
+                  control={form.control}
+                  name="durationDays"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Durée souhaitée du voyage</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez le nombre de jours" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1-3">Week-end (1-3 jours)</SelectItem>
+                          <SelectItem value="4-7">Court séjour (4-7 jours)</SelectItem>
+                          <SelectItem value="8-14">1-2 semaines</SelectItem>
+                          <SelectItem value="15-21">2-3 semaines</SelectItem>
+                          <SelectItem value="22+">Plus de 3 semaines</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormItem>
                   <FormLabel>Centres d'intérêt</FormLabel>

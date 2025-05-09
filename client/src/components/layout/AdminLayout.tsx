@@ -1,8 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Axis3d, 
@@ -20,6 +18,12 @@ interface AdminLayoutProps {
   children: ReactNode;
 }
 
+interface AdminUser {
+  name: string;
+  email: string;
+  role: string;
+}
+
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [location, setLocation] = useLocation();
   const [isDashboard] = useRoute("/admin");
@@ -30,25 +34,77 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [isOrders] = useRoute("/admin/orders");
   
   const { toast } = useToast();
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const { data: session, isLoading } = useQuery({
-    queryKey: ["/api/auth/session"],
-    refetchOnWindowFocus: true,
-  });
+  useEffect(() => {
+    // Vérifier l'authentification depuis localStorage
+    // Note: Nous stockons toujours les infos utilisateur dans localStorage 
+    // pour l'affichage, mais l'authentification repose sur les cookies de session
+    const userData = localStorage.getItem("adminUser");
+    
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error("Erreur lors du parsing des données utilisateur", error);
+      }
+    }
+    
+    // Vérifier l'état de la session côté serveur
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", {
+          credentials: "include" // Important pour inclure les cookies
+        });
+        const data = await response.json();
+        
+        if (!data.isAuthenticated) {
+          // Si la session n'est pas valide, rediriger vers la page de connexion
+          localStorage.removeItem("adminUser");
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de la session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkSession();
+  }, []);
+  
+  useEffect(() => {
+    // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié et que le chargement est terminé
+    if (!isLoading && !user) {
+      setLocation("/login");
+    }
+  }, [user, isLoading, setLocation]);
   
   const handleLogout = async () => {
     try {
-      await apiRequest("POST", "/api/auth/logout", {});
+      // Appeler l'API de déconnexion pour détruire la session côté serveur
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+      
+      // Supprimer les informations d'authentification
+      localStorage.removeItem("adminUser");
+      
       toast({
         title: "Déconnexion réussie",
         description: "Vous avez été déconnecté avec succès.",
       });
+      
+      setUser(null);
       setLocation("/login");
     } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de vous déconnecter. Veuillez réessayer.",
+        description: "Une erreur est survenue lors de la déconnexion.",
       });
     }
   };
@@ -61,9 +117,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     );
   }
   
-  if (!session?.isAuthenticated) {
-    setLocation("/login");
-    return null;
+  if (!user) {
+    return null; // Le useEffect déplacé plus haut s'occupera de la redirection
   }
   
   return (
@@ -149,8 +204,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               <Users size={18} />
             </div>
             <div>
-              <p className="font-medium text-sm">{session?.username}</p>
-              <p className="text-xs text-gray-500">Administrateur</p>
+              <p className="font-medium text-sm">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.role}</p>
             </div>
           </div>
           
@@ -178,7 +233,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </Button>
         </header>
         
-        <main className="p-6">{children}</main>
+        <main>{children}</main>
       </div>
     </div>
   );

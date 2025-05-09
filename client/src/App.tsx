@@ -1,5 +1,6 @@
 import { Switch, Route } from "wouter";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CartProvider } from "@/hooks/use-cart";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Tours from "@/pages/tours";
@@ -55,7 +56,9 @@ function Router() {
 function App() {
   return (
     <TooltipProvider>
-      <Router />
+      <CartProvider>
+        <Router />
+      </CartProvider>
     </TooltipProvider>
   );
 }

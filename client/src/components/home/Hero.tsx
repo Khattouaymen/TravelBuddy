@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Category } from "@shared/schema";
+import './hero.css';
 
 const Hero = () => {
   const [searchParams, setSearchParams] = useState({
@@ -23,56 +24,77 @@ const Hero = () => {
     date: "",
     travelers: "1",
   });
-  
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const backgroundImages = [
+    "https://darkgray-falcon-959539.hostingersite.com/wp-content/uploads/2025/02/pexels-al-creation-studio-188975817-11344766-scaled.jpg",
+    "https://darkgray-falcon-959539.hostingersite.com/wp-content/uploads/2025/02/pexels-naimbic-2610819-scaled.jpg",
+    "https://darkgray-falcon-959539.hostingersite.com/wp-content/uploads/2025/02/hans-jurgen-weinhardt-xijil3cOsis-unsplash-scaled.jpg",
+    "https://darkgray-falcon-959539.hostingersite.com/wp-content/uploads/2025/02/selina-bubendorfer-FP9g9fNk9zA-unsplash-scaled.jpg"
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % backgroundImages.length);
+    }, 8000); // Change image every 8 seconds
+
+    return () => clearInterval(interval);
+  }, [backgroundImages.length]);
+
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSearchParams((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   const handleSelectChange = (name: string, value: string) => {
     setSearchParams((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
-    
+
     if (searchParams.destination) {
       queryParams.append("destination", searchParams.destination);
     }
-    
+
     if (searchParams.date) {
       queryParams.append("date", searchParams.date);
     }
-    
+
     if (searchParams.travelers) {
       queryParams.append("travelers", searchParams.travelers);
     }
-    
+
     window.location.href = `/tours?${queryParams.toString()}`;
   };
-  
+
   return (
-    <section className="relative bg-secondary">
-      <div 
-        className="absolute inset-0 bg-cover bg-center" 
-        style={{ 
-          backgroundImage: "url('https://images.unsplash.com/photo-1597214815475-3e9d92689ee0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')", 
-          filter: "brightness(0.6)" 
-        }}
-      ></div>
+    <section className="relative bg-secondary overflow-hidden h-screen max-h-[800px]">
+      <div className="absolute inset-0">
+        {backgroundImages.map((image, index) => (
+          <div
+            key={index}
+            className={`slideshow-image ${currentImageIndex === index ? "active" : ""}`}
+            style={{ backgroundImage: `url('${image}')` }}
+          ></div>
+        ))}
+      </div>
+
+      <div className="absolute inset-0 bg-black bg-opacity-35"></div>
+
       <div className="relative container mx-auto px-4 py-24">
         <div className="max-w-xl">
-          <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-4 drop-shadow-lg">
             Découvrez les trésors cachés du Maroc
           </h1>
-          <p className="text-lg text-white mb-8">
+          <p className="text-lg text-white mb-8 drop-shadow-lg">
             Voyages sur mesure, expériences authentiques et souvenirs inoubliables
           </p>
-          <Card className="p-6 rounded-lg shadow-lg">
+          <Card className="p-6 rounded-lg shadow-xl backdrop-blur-sm bg-white/95">
             <CardContent className="p-0">
               <h2 className="text-xl font-heading font-semibold mb-4">
                 Trouvez votre prochaine aventure
@@ -90,7 +112,7 @@ const Hero = () => {
                       <SelectValue placeholder="Toutes les destinations" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Toutes les destinations</SelectItem>
+                      <SelectItem value="all-destinations">Toutes les destinations</SelectItem>
                       {categories?.map((category) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}

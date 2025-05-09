@@ -141,7 +141,7 @@ const Tours = () => {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toutes les catégories</SelectItem>
+                    <SelectItem value="all-categories">Toutes les catégories</SelectItem>
                     {categories?.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
@@ -163,7 +163,7 @@ const Tours = () => {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Toutes les durées</SelectItem>
+                    <SelectItem value="all-durations">Toutes les durées</SelectItem>
                     <SelectItem value="1-3">1-3 jours</SelectItem>
                     <SelectItem value="4-7">4-7 jours</SelectItem>
                     <SelectItem value="8-14">8-14 jours</SelectItem>
@@ -183,7 +183,7 @@ const Tours = () => {
                     <SelectValue placeholder="Budget" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tous les budgets</SelectItem>
+                    <SelectItem value="all-budgets">Tous les budgets</SelectItem>
                     <SelectItem value="0-3000">Moins de 3 000 MAD</SelectItem>
                     <SelectItem value="3000-5000">3 000 - 5 000 MAD</SelectItem>
                     <SelectItem value="5000-8000">5 000 - 8 000 MAD</SelectItem>

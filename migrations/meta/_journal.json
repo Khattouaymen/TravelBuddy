@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1746191083100,
+      "tag": "0000_smooth_carnage",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1746379591000,
+      "tag": "0001_add_duration_days",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1746580000000,
+      "tag": "0002_add_phone_column",
+      "breakpoints": true
+    }
+  ]
+}

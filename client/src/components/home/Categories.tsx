@@ -7,16 +7,22 @@ import { Category } from "@shared/schema";
 const CategoryCard = ({ category }: { category: Category }) => {
   return (
     <Link href={`/tours?categoryId=${category.id}`}>
-      <a className="group">
-        <div className="relative rounded-lg overflow-hidden h-40">
+      <a className="group block">
+        <div className="relative rounded-lg overflow-hidden h-48 shadow-md transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
           <img
-            src={category.imageUrl}
-            alt={category.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            src={category.imageUrl || 'https://images.unsplash.com/photo-1619111551766-4bd6d4371090?q=80&w=500&auto=format&fit=crop'}
+            alt={`Catégorie de voyage: ${category.name}`}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-          <div className="absolute bottom-0 left-0 p-4">
-            <h3 className="text-white font-heading font-semibold">{category.name}</h3>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity"></div>
+          <div className="absolute bottom-0 left-0 p-4 w-full">
+            <h3 className="text-white font-heading font-semibold text-lg mb-1">{category.name}</h3>
+            {category.tourCount && (
+              <p className="text-white/80 text-sm">
+                {category.tourCount} circuit{category.tourCount > 1 ? 's' : ''}
+              </p>
+            )}
           </div>
         </div>
       </a>

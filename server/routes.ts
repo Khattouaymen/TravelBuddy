@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { PostgresStorage, testConnection } from "./db";
 import { z } from "zod";
 import { 
   insertUserSchema, 
@@ -17,7 +17,19 @@ import {
 import session from "express-session";
 import MemoryStore from "memorystore";
 
+// Créer une instance de PostgresStorage
+const db = new PostgresStorage();
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Tester la connexion à PostgreSQL
+  const connected = await testConnection();
+  if (!connected) {
+    console.error("❌ ERREUR CRITIQUE: Impossible de se connecter à PostgreSQL. L'application nécessite une connexion à la base de données pour fonctionner.");
+    process.exit(1); // Arrêter l'application si la connexion à la base de données échoue
+  } else {
+    console.log("✅ Connexion à PostgreSQL établie avec succès");
+  }
+  
   // Session setup
   const MemoryStoreSession = MemoryStore(session);
   app.use(session({
@@ -43,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const isAdmin = async (req: Request, res: Response, next: Function) => {
     if (req.session.user) {
-      const user = await storage.getUserByUsername(req.session.user);
+      const user = await db.getUserByUsername(req.session.user);
       if (user && user.isAdmin) {
         next();
       } else {
@@ -63,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
       
-      const user = await storage.getUserByUsername(username);
+      const user = await db.getUserByUsername(username);
       
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
@@ -105,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await db.getCategories();
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Error fetching categories" });
@@ -115,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const category = await storage.getCategory(id);
+      const category = await db.getCategory(id);
       
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
@@ -130,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/categories", isAdmin, async (req, res) => {
     try {
       const validatedData = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(validatedData);
+      const category = await db.createCategory(validatedData);
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -144,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertCategorySchema.partial().parse(req.body);
-      const updatedCategory = await storage.updateCategory(id, validatedData);
+      const updatedCategory = await db.updateCategory(id, validatedData);
       
       if (!updatedCategory) {
         return res.status(404).json({ message: "Category not found" });
@@ -162,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/categories/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteCategory(id);
+      const deleted = await db.deleteCategory(id);
       
       if (!deleted) {
         return res.status(404).json({ message: "Category not found" });
@@ -182,11 +194,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let tours;
       
       if (featured === "true") {
-        tours = await storage.getFeaturedTours(limit ? parseInt(limit as string) : undefined);
+        tours = await db.getFeaturedTours(limit ? parseInt(limit as string) : undefined);
       } else if (categoryId) {
-        tours = await storage.getToursByCategory(parseInt(categoryId as string));
+        tours = await db.getToursByCategory(parseInt(categoryId as string));
       } else {
-        tours = await storage.getTours();
+        tours = await db.getTours();
       }
       
       res.json(tours);
@@ -198,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tours/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const tour = await storage.getTour(id);
+      const tour = await db.getTour(id);
       
       if (!tour) {
         return res.status(404).json({ message: "Tour not found" });
@@ -213,7 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tours", isAdmin, async (req, res) => {
     try {
       const validatedData = insertTourSchema.parse(req.body);
-      const tour = await storage.createTour(validatedData);
+      const tour = await db.createTour(validatedData);
       res.status(201).json(tour);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -227,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertTourSchema.partial().parse(req.body);
-      const updatedTour = await storage.updateTour(id, validatedData);
+      const updatedTour = await db.updateTour(id, validatedData);
       
       if (!updatedTour) {
         return res.status(404).json({ message: "Tour not found" });
@@ -245,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/tours/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteTour(id);
+      const deleted = await db.deleteTour(id);
       
       if (!deleted) {
         return res.status(404).json({ message: "Tour not found" });
@@ -260,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bookings routes
   app.get("/api/bookings", isAdmin, async (req, res) => {
     try {
-      const bookings = await storage.getBookings();
+      const bookings = await db.getBookings();
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ message: "Error fetching bookings" });
@@ -270,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/bookings/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const booking = await storage.getBooking(id);
+      const booking = await db.getBooking(id);
       
       if (!booking) {
         return res.status(404).json({ message: "Booking not found" });
@@ -285,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/bookings", async (req, res) => {
     try {
       const validatedData = insertBookingSchema.parse(req.body);
-      const booking = await storage.createBooking(validatedData);
+      const booking = await db.createBooking(validatedData);
       res.status(201).json(booking);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -304,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
       
-      const updatedBooking = await storage.updateBookingStatus(id, status);
+      const updatedBooking = await db.updateBookingStatus(id, status);
       
       if (!updatedBooking) {
         return res.status(404).json({ message: "Booking not found" });
@@ -319,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Custom requests routes
   app.get("/api/custom-requests", isAdmin, async (req, res) => {
     try {
-      const requests = await storage.getCustomRequests();
+      const requests = await db.getCustomRequests();
       res.json(requests);
     } catch (error) {
       res.status(500).json({ message: "Error fetching custom requests" });
@@ -329,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/custom-requests/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const request = await storage.getCustomRequest(id);
+      const request = await db.getCustomRequest(id);
       
       if (!request) {
         return res.status(404).json({ message: "Custom request not found" });
@@ -344,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/custom-requests", async (req, res) => {
     try {
       const validatedData = insertCustomRequestSchema.parse(req.body);
-      const request = await storage.createCustomRequest(validatedData);
+      const request = await db.createCustomRequest(validatedData);
       res.status(201).json(request);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -363,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
       
-      const updatedRequest = await storage.updateCustomRequestStatus(id, status);
+      const updatedRequest = await db.updateCustomRequestStatus(id, status);
       
       if (!updatedRequest) {
         return res.status(404).json({ message: "Custom request not found" });
@@ -383,9 +395,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let products;
       
       if (category) {
-        products = await storage.getProductsByCategory(category as string);
+        products = await db.getProductsByCategory(category as string);
       } else {
-        products = await storage.getProducts();
+        products = await db.getProducts();
       }
       
       res.json(products);
@@ -397,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const product = await db.getProduct(id);
       
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -412,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", isAdmin, async (req, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
-      const product = await storage.createProduct(validatedData);
+      const product = await db.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -426,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertProductSchema.partial().parse(req.body);
-      const updatedProduct = await storage.updateProduct(id, validatedData);
+      const updatedProduct = await db.updateProduct(id, validatedData);
       
       if (!updatedProduct) {
         return res.status(404).json({ message: "Product not found" });
@@ -444,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/products/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteProduct(id);
+      const deleted = await db.deleteProduct(id);
       
       if (!deleted) {
         return res.status(404).json({ message: "Product not found" });
@@ -459,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders routes
   app.get("/api/orders", isAdmin, async (req, res) => {
     try {
-      const orders = await storage.getOrders();
+      const orders = await db.getOrders();
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Error fetching orders" });
@@ -469,7 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const order = await storage.getOrder(id);
+      const order = await db.getOrder(id);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -484,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders", async (req, res) => {
     try {
       const validatedData = insertOrderSchema.parse(req.body);
-      const order = await storage.createOrder(validatedData);
+      const order = await db.createOrder(validatedData);
       res.status(201).json(order);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -503,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status" });
       }
       
-      const updatedOrder = await storage.updateOrderStatus(id, status);
+      const updatedOrder = await db.updateOrderStatus(id, status);
       
       if (!updatedOrder) {
         return res.status(404).json({ message: "Order not found" });
@@ -523,9 +535,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let posts;
       
       if (category) {
-        posts = await storage.getBlogPostsByCategory(category as string);
+        posts = await db.getBlogPostsByCategory(category as string);
       } else {
-        posts = await storage.getBlogPosts();
+        posts = await db.getBlogPosts();
       }
       
       res.json(posts);
@@ -537,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/blog/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const post = await storage.getBlogPost(id);
+      const post = await db.getBlogPost(id);
       
       if (!post) {
         return res.status(404).json({ message: "Blog post not found" });
@@ -552,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/blog", isAdmin, async (req, res) => {
     try {
       const validatedData = insertBlogPostSchema.parse(req.body);
-      const post = await storage.createBlogPost(validatedData);
+      const post = await db.createBlogPost(validatedData);
       res.status(201).json(post);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -566,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertBlogPostSchema.partial().parse(req.body);
-      const updatedPost = await storage.updateBlogPost(id, validatedData);
+      const updatedPost = await db.updateBlogPost(id, validatedData);
       
       if (!updatedPost) {
         return res.status(404).json({ message: "Blog post not found" });
@@ -584,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/blog/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteBlogPost(id);
+      const deleted = await db.deleteBlogPost(id);
       
       if (!deleted) {
         return res.status(404).json({ message: "Blog post not found" });
@@ -599,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Testimonials routes
   app.get("/api/testimonials", async (req, res) => {
     try {
-      const testimonials = await storage.getTestimonials();
+      const testimonials = await db.getTestimonials();
       res.json(testimonials);
     } catch (error) {
       res.status(500).json({ message: "Error fetching testimonials" });
@@ -609,7 +621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/testimonials", isAdmin, async (req, res) => {
     try {
       const validatedData = insertTestimonialSchema.parse(req.body);
-      const testimonial = await storage.createTestimonial(validatedData);
+      const testimonial = await db.createTestimonial(validatedData);
       res.status(201).json(testimonial);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -623,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/newsletter", async (req, res) => {
     try {
       const validatedData = insertNewsletterSchema.parse(req.body);
-      const newsletter = await storage.addNewsletterSubscription(validatedData);
+      const newsletter = await db.addNewsletterSubscription(validatedData);
       res.status(201).json(newsletter);
     } catch (error) {
       if (error instanceof z.ZodError) {

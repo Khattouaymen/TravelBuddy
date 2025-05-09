@@ -1,0 +1,1 @@
+ALTER TABLE "custom_requests" ADD COLUMN IF NOT EXISTS "phone" text;

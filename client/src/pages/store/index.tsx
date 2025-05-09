@@ -188,7 +188,7 @@ const Store = () => {
                     <SelectValue placeholder="Fourchette de prix" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tous les prix</SelectItem>
+                    <SelectItem value="all-prices">Tous les prix</SelectItem>
                     <SelectItem value="0-300">Moins de 300 MAD</SelectItem>
                     <SelectItem value="300-500">300 - 500 MAD</SelectItem>
                     <SelectItem value="500-1000">500 - 1000 MAD</SelectItem>

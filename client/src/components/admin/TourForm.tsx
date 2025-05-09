@@ -52,6 +52,7 @@ const tourFormSchema = z.object({
   imageUrl: z.string().url("URL d'image invalide"),
   duration: z.number().min(1, "La durée doit être d'au moins 1 jour"),
   price: z.number().min(1, "Le prix doit être d'au moins 1 MAD"),
+  discountPrice: z.number().nullable().default(null),
   locations: z.string().min(3, "Les lieux doivent être spécifiés"),
   featured: z.boolean().default(false),
   categoryId: z.number().nullable().default(null),
@@ -86,6 +87,7 @@ const TourForm = ({ tour, onSuccess }: TourFormProps) => {
       imageUrl: tour?.imageUrl || "",
       duration: tour?.duration || 1,
       price: tour?.price || 1000,
+      discountPrice: tour?.discountPrice || null,
       locations: tour?.locations || "",
       featured: tour?.featured || false,
       categoryId: tour?.categoryId || null,
@@ -190,12 +192,15 @@ const TourForm = ({ tour, onSuccess }: TourFormProps) => {
         return;
       }
 
-      // Create the full tour object
+      // Create the full tour object with explicit boolean conversion for featured
       const tourData = {
         ...values,
+        featured: values.featured === true, // Conversion explicite en booléen
         tourPlan,
         mapPoints,
       };
+
+      console.log("Tour data being sent:", JSON.stringify(tourData, null, 2)); // Log pour débogage
 
       if (tour) {
         // Update existing tour
@@ -261,7 +266,7 @@ const TourForm = ({ tour, onSuccess }: TourFormProps) => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Aucune catégorie</SelectItem>
+                    <SelectItem value="no-category">Aucune catégorie</SelectItem>
                     {categories?.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
@@ -333,7 +338,7 @@ const TourForm = ({ tour, onSuccess }: TourFormProps) => {
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prix (MAD)</FormLabel>
+                <FormLabel>Prix normal (MAD)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -343,6 +348,29 @@ const TourForm = ({ tour, onSuccess }: TourFormProps) => {
                     onChange={(e) => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="discountPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Prix réduit (MAD)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="Prix promotionnel (optionnel)"
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Laissez vide s'il n'y a pas de promotion.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

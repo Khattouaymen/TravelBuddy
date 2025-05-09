@@ -39,7 +39,14 @@ const TourCard = ({ tour }: TourCardProps) => {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-xs text-gray-500">À partir de</span>
-              <p className="text-lg font-semibold">{tour.price} MAD</p>
+              {tour.discountPrice ? (
+                <div>
+                  <p className="text-lg font-semibold text-primary">{tour.discountPrice} MAD</p>
+                  <p className="text-sm line-through text-gray-500">{tour.price} MAD</p>
+                </div>
+              ) : (
+                <p className="text-lg font-semibold">{tour.price} MAD</p>
+              )}
             </div>
             <Button
               variant="default"

@@ -101,7 +101,15 @@ const TourDetails = ({ tourId }: TourDetailsProps) => {
             </div>
             
             <p className="text-2xl font-semibold text-primary">
-              À partir de {tour.price} MAD <span className="text-sm text-gray-500">/ personne</span>
+              {tour.discountPrice ? (
+                <>
+                  <span className="text-2xl font-semibold text-primary">{tour.discountPrice} MAD</span>
+                  <span className="text-lg line-through text-gray-500 ml-2">{tour.price} MAD</span>
+                </>
+              ) : (
+                <>{tour.price} MAD</>
+              )}
+              <span className="text-sm text-gray-500"> / personne</span>
             </p>
           </div>
 

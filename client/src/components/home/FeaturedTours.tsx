@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tour } from "@shared/schema";
 import TourCard from "@/components/tours/TourCard";
@@ -16,15 +16,27 @@ const categories = [
 
 const FeaturedTours = () => {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [featuredTours, setFeaturedTours] = useState<Tour[]>([]);
   
+  // Récupérer tous les circuits (sans filtrer par featured dans la requête)
   const { data: tours, isLoading } = useQuery<Tour[]>({
-    queryKey: ["/api/tours", { featured: true, limit: 6 }],
+    queryKey: ["/api/tours"],
   });
   
-  const filteredTours = tours
+  // Filtrer les circuits en vedette côté client
+  useEffect(() => {
+    if (tours) {
+      // Filtrer strictement les circuits où featured est exactement true
+      const filtered = tours.filter(tour => tour.featured === true);
+      console.log('Circuits filtrés par featured===true:', filtered.length);
+      setFeaturedTours(filtered.slice(0, 6)); // Limiter à 6 circuits
+    }
+  }, [tours]);
+  
+  const filteredTours = featuredTours
     ? activeCategory === "all"
-      ? tours
-      : tours.filter((tour) => {
+      ? featuredTours
+      : featuredTours.filter((tour) => {
           switch (activeCategory) {
             case "desert":
               return tour.locations.toLowerCase().includes("desert") || 
@@ -45,6 +57,13 @@ const FeaturedTours = () => {
           }
         })
     : [];
+  
+  // Ajouter un log de débogage pour voir quels circuits sont réellement en vedette
+  useEffect(() => {
+    if (tours) {
+      console.log('Tous les circuits:', tours.map(t => ({id: t.id, title: t.title, featured: t.featured})));
+    }
+  }, [tours]);
   
   return (
     <section className="py-12 bg-gray-50">
@@ -86,7 +105,13 @@ const FeaturedTours = () => {
                     </div>
                   </div>
                 ))
-            : filteredTours.map((tour) => <TourCard key={tour.id} tour={tour} />)}
+            : filteredTours.length > 0 ? (
+                filteredTours.map((tour) => <TourCard key={tour.id} tour={tour} />)
+              ) : (
+                <div className="col-span-3 text-center py-8">
+                  <p className="text-gray-500">Aucun circuit en vedette disponible pour le moment.</p>
+                </div>
+              )}
         </div>
         
         <div className="text-center mt-8">

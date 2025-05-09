@@ -41,6 +41,7 @@ export const tours = pgTable("tours", {
   imageUrl: text("image_url"),
   duration: integer("duration").notNull(), // in days
   price: integer("price").notNull(), // in MAD
+  discountPrice: integer("discount_price"), // Prix réduit pour les promotions
   locations: text("locations").notNull(), // comma separated
   featured: boolean("featured").default(false),
   categoryId: integer("category_id"),
@@ -57,6 +58,7 @@ export const insertTourSchema = createInsertSchema(tours).pick({
   imageUrl: true,
   duration: true,
   price: true,
+  discountPrice: true,
   locations: true,
   featured: true,
   categoryId: true,
@@ -93,10 +95,12 @@ export const customRequests = pgTable("custom_requests", {
   id: serial("id").primaryKey(),
   fullName: text("full_name").notNull(),
   email: text("email").notNull(),
+  phone: text("phone"), // Nouveau champ pour le numéro de téléphone
   destination: text("destination").notNull(),
   budget: text("budget").notNull(),
   departureDate: text("departure_date").notNull(),
   persons: integer("persons").notNull(),
+  durationDays: integer("duration_days"), // Nouveau champ pour la durée du voyage en jours
   interests: text("interests"), // comma separated
   additionalDetails: text("additional_details"),
   status: text("status").default("new"), // new, in-progress, completed
@@ -106,10 +110,12 @@ export const customRequests = pgTable("custom_requests", {
 export const insertCustomRequestSchema = createInsertSchema(customRequests).pick({
   fullName: true,
   email: true,
+  phone: true, // Ajouté au schema d'insertion
   destination: true,
   budget: true,
   departureDate: true,
   persons: true,
+  durationDays: true,
   interests: true,
   additionalDetails: true,
 });

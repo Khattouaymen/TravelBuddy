@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Axis3d, ShoppingCart, Search, Menu, X } from "lucide-react";
+import logoImage from "@/assets/logo.png"; // Remplacez logo.png par le nom de votre fichier
 
 // Create a mock cart hook to use if the real one is not available
 const useCartMock = () => ({ items: [] });
@@ -83,10 +84,7 @@ const Header = () => {
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <Axis3d className="h-8 w-8 text-primary mr-2" />
-              <span className="font-heading font-bold text-xl text-secondary">
-                Maroc<span className="text-primary">Voyages</span>
-              </span>
+              <img src={logoImage} alt="Maroc Voyages" className="h-10 w-auto" />
             </Link>
           </div>
           
